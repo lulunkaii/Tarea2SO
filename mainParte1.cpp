@@ -6,6 +6,8 @@
 #include <cstring>
 
 int max_wait_time;
+FILE *log_file;
+
 typedef struct {
     int *buffer;
     int size;
@@ -44,26 +46,50 @@ void resizeQueue(ColaCircular *q) {
     if (isFull(q)) {
         q->size *= 2;
         std::cout << "Size de la cola reasignado: nuevo size: " << q->size << std::endl;
+        fprintf(log_file, "Size de la cola reasignado: nuevo size: %d\n", q->size);
     } else if (q->count <= q->size / 4) {
         q->size /= 2;
         std::cout << "Size de la cola reasignado: nuevo size: " << q->size << std::endl;
+        fprintf(log_file, "Size de la cola reasignado: nuevo size: %d\n", q->size);
     }
     q->buffer = (int *)realloc(q->buffer, q->size * sizeof(int));
 }
 
 // Agrega un item a la cola
 void enqueue(ColaCircular *q, int item) {
+    pthread_mutex_lock(&q->lock);
+    if (isFull(q)) {
+        resizeQueue(q);
+        pthread_cond_broadcast(&q->not_full);
+    }
     q->buffer[q->rear] = item;
     q->rear = (q->rear + 1) % q->size;
     q->count++;
-    return;
+    pthread_mutex_unlock(&q->lock);
+    pthread_cond_signal(&q->not_empty);
 }
 
 // Saca un item de la cola
 int dequeue(ColaCircular *q) {
+    pthread_mutex_lock(&q->lock);
+    while (isEmpty(q)) {
+        struct timespec ts;
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += max_wait_time; // Espera máxima
+        if (pthread_cond_timedwait(&q->not_empty, &q->lock, &ts) == ETIMEDOUT) {
+            pthread_mutex_unlock(&q->lock);
+            return -1; // Indicar que se alcanzó el tiempo máximo de espera
+        }
+    }
     int item = q->buffer[q->front];
     q->front = (q->front + 1) % q->size;
     q->count--;
+    if (q->count <= q->size / 4) {
+        resizeQueue(q); // Reducir tamaño de la cola si su uso llega al 25%
+        pthread_cond_broadcast(&q->not_full); // Notificar a todos los productores
+    }
+    pthread_mutex_unlock(&q->lock);
+    pthread_cond_signal(&q->not_full);
     return item;
 }
 
@@ -71,12 +97,21 @@ int dequeue(ColaCircular *q) {
 int item = 0;
 void *productor(void *arg) {
     ColaCircular *q = (ColaCircular *)arg;
+    
+    enqueue(q, item);
+    std::cout << "Productor: " << item << std::endl;
+    fprintf(log_file, "Productor: %d\n", item);
+    item++;
+    
     return NULL;
 }
 
 // Consume items de la cola
 void *consumidor(void *arg) {
     ColaCircular *q = (ColaCircular *)arg;
+    int itemConsumido = dequeue(q);
+    std::cout << "Consumidor: " << item << std::endl;
+    fprintf(log_file, "Consumidor: %d\n", itemConsumido);
     return NULL;
 }
 
@@ -106,6 +141,13 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // Abrir archivo para hacer el log
+    log_file = fopen("log.txt", "w");
+    if (log_file == NULL) {
+        std::cerr << "No se pudo abrir el archivo de log." << std::endl;
+        return 1;
+    }
+
     ColaCircular queue;
     iniciarCola(&queue, initial_size);
 
@@ -133,6 +175,8 @@ int main(int argc, char *argv[]) {
     pthread_mutex_destroy(&queue.lock);
     pthread_cond_destroy(&queue.not_full);
     pthread_cond_destroy(&queue.not_empty);
+
+    fclose(log_file);
 
     return 0;
 }
