@@ -1,3 +1,6 @@
+# Ignorar logs
+log.txt
+
 # Prerequisites
 *.d
 

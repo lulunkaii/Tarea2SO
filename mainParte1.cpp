@@ -7,6 +7,7 @@
 
 int max_wait_time;
 FILE *log_file;
+int item = 0;
 
 typedef struct {
     int *buffer;
@@ -14,21 +15,31 @@ typedef struct {
     int front;
     int rear;
     int count;
+    int productores_activos;
+    int tiempo_espera_max_consumidor;
+    bool hay_productores;
+    bool timer_activo;
     pthread_mutex_t lock;
     pthread_cond_t not_full;
     pthread_cond_t not_empty;
+    pthread_cond_t productores_terminados;
 } ColaCircular;
 
 // Inicia la cola (le asigna el espacio de memoria)
-void iniciarCola(ColaCircular *q, int size) {
+void iniciarCola(ColaCircular *q, int size, int productores_activos, int tiempo_espera_max_consumidor) {
     q->size = size;
     q->buffer = (int *)malloc(size * sizeof(int));
     q->front = 0;
     q->rear = 0;
     q->count = 0;
+    q->productores_activos = productores_activos;
+    q->tiempo_espera_max_consumidor = tiempo_espera_max_consumidor;
+    q->hay_productores = true;
+    q->timer_activo = false;
     pthread_mutex_init(&q->lock, NULL);
     pthread_cond_init(&q->not_full, NULL);
     pthread_cond_init(&q->not_empty, NULL);
+    pthread_cond_init(&q->productores_terminados, NULL);
 }
 
 // Revisa si la cola esta llena
@@ -45,11 +56,9 @@ bool isEmpty(ColaCircular *q) {
 void resizeQueue(ColaCircular *q) {
     if (isFull(q)) {
         q->size *= 2;
-        std::cout << "Size de la cola reasignado: nuevo size: " << q->size << std::endl;
         fprintf(log_file, "Size de la cola reasignado: nuevo size: %d\n", q->size);
     } else if (q->count <= q->size / 4) {
         q->size /= 2;
-        std::cout << "Size de la cola reasignado: nuevo size: " << q->size << std::endl;
         fprintf(log_file, "Size de la cola reasignado: nuevo size: %d\n", q->size);
     }
     q->buffer = (int *)realloc(q->buffer, q->size * sizeof(int));
@@ -72,7 +81,7 @@ void enqueue(ColaCircular *q, int item) {
 // Saca un item de la cola
 int dequeue(ColaCircular *q) {
     pthread_mutex_lock(&q->lock);
-    while (isEmpty(q)) {
+    while (isEmpty(q) && (q->hay_productores || q->timer_activo)) {
         struct timespec ts;
         clock_gettime(CLOCK_REALTIME, &ts);
         ts.tv_sec += max_wait_time; // Espera máxima
@@ -80,6 +89,10 @@ int dequeue(ColaCircular *q) {
             pthread_mutex_unlock(&q->lock);
             return -1; // Indicar que se alcanzó el tiempo máximo de espera
         }
+    }
+    if (isEmpty(q)) {
+        pthread_mutex_unlock(&q->lock);
+        return -1;
     }
     int item = q->buffer[q->front];
     q->front = (q->front + 1) % q->size;
@@ -94,14 +107,22 @@ int dequeue(ColaCircular *q) {
 }
 
 // Produce items para la cola
-int item = 0;
 void *productor(void *arg) {
     ColaCircular *q = (ColaCircular *)arg;
     
     enqueue(q, item);
-    std::cout << "Productor: " << item << std::endl;
     fprintf(log_file, "Productor: %d\n", item);
     item++;
+    usleep(100000); // Pequeño retraso para simular trabajo
+    
+    pthread_mutex_lock(&q->lock);
+    q->productores_activos--;
+    if (q->productores_activos == 0) {
+        q->hay_productores = false;
+        q->timer_activo = true;
+        pthread_cond_broadcast(&q->productores_terminados);
+    }
+    pthread_mutex_unlock(&q->lock);
     
     return NULL;
 }
@@ -109,12 +130,43 @@ void *productor(void *arg) {
 // Consume items de la cola
 void *consumidor(void *arg) {
     ColaCircular *q = (ColaCircular *)arg;
-    int itemConsumido = dequeue(q);
-    std::cout << "Consumidor: " << item << std::endl;
-    fprintf(log_file, "Consumidor: %d\n", itemConsumido);
+    while (true) {
+        int itemConsumido = dequeue(q);
+        if (itemConsumido != -1) {
+            fprintf(log_file, "Consumidor: %d\n", itemConsumido);
+        } else {
+            fprintf(log_file, "Consumidor: Tiempo de espera máximo alcanzado\n");
+        }
+        usleep(150000); // Pequeño retraso para simular trabajo
+        
+        pthread_mutex_lock(&q->lock);
+        if (!q->hay_productores && !q->timer_activo) {
+            pthread_mutex_unlock(&q->lock);
+            break;
+        }
+        pthread_mutex_unlock(&q->lock);
+    }
+
     return NULL;
 }
 
+void *temporizador(void *arg) {
+    ColaCircular *q = (ColaCircular *)arg;
+    pthread_mutex_lock(&q->lock);
+    while (q->hay_productores) {
+        pthread_cond_wait(&q->productores_terminados, &q->lock);
+    }
+    pthread_mutex_unlock(&q->lock);
+
+    sleep(q->tiempo_espera_max_consumidor);
+
+    pthread_mutex_lock(&q->lock);
+    q->timer_activo = false;
+    pthread_cond_broadcast(&q->not_empty);
+    pthread_mutex_unlock(&q->lock);
+
+    return NULL;
+}
 
 int main(int argc, char *argv[]) {
     if (argc < 9) {
@@ -140,7 +192,7 @@ int main(int argc, char *argv[]) {
             return 1;
         }
     }
-
+    
     // Abrir archivo para hacer el log
     log_file = fopen("log.txt", "w");
     if (log_file == NULL) {
@@ -149,22 +201,29 @@ int main(int argc, char *argv[]) {
     }
 
     ColaCircular queue;
-    iniciarCola(&queue, initial_size);
+    iniciarCola(&queue, initial_size, num_productores, max_wait_time);
 
     pthread_t productores[num_productores];
     pthread_t consumidores[num_consumidores];
+    pthread_t timer_thread;
 
     for (int i = 0; i < num_productores; i++) {
         pthread_create(&productores[i], NULL, productor, (void *)&queue);
+        usleep(50000); // Pequeño retraso para permitir que los hilos se inicien
     }
 
     for (int i = 0; i < num_consumidores; i++) {
         pthread_create(&consumidores[i], NULL, consumidor, (void *)&queue);
+        usleep(50000); // Pequeño retraso para permitir que los hilos se inicien
     }
 
+    pthread_create(&timer_thread, NULL, temporizador, (void *)&queue);
+    
     for (int i = 0; i < num_productores; i++) {
         pthread_join(productores[i], NULL);
     }
+
+    pthread_join(timer_thread, NULL);
 
     for (int i = 0; i < num_consumidores; i++) {
         pthread_join(consumidores[i], NULL);
@@ -175,6 +234,7 @@ int main(int argc, char *argv[]) {
     pthread_mutex_destroy(&queue.lock);
     pthread_cond_destroy(&queue.not_full);
     pthread_cond_destroy(&queue.not_empty);
+    pthread_cond_destroy(&queue.productores_terminados);
 
     fclose(log_file);
 
