@@ -4,7 +4,7 @@
 
 template <typename T>
 hash_table_paginas<T>::hash_table_paginas(int size) {
-    this->size = size;
+    this->size_inicial = size;
     this->num_elements = 0;
     table = new std::list<int>[size];
 }

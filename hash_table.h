@@ -6,12 +6,12 @@
 
 template <typename T>
 class hash_table_paginas {
-    int size;
+    int size_inicial;
     int num_elements;
     std::list<T> *table;
 
 public:
-    hash_table_paginas(int size);
+    hash_table_paginas(int size_inicial);
 
     void insert(T key);
 
