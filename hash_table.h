@@ -7,6 +7,7 @@
 template <typename T>
 class hash_table_paginas {
     int size;
+    int num_elements;
     std::list<T> *table;
 
 public:
@@ -17,6 +18,8 @@ public:
     void remove(T key);
 
     bool search(T key);
+    
+    int size();
 
     ~hash_table_paginas();
 };
