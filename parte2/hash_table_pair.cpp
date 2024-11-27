@@ -2,6 +2,7 @@
 #include <list>
 #include <vector>
 #include <utility>
+#include <iostream>
 
 hash_table_pair::hash_table_pair(int size) {
     this->size_inicial = size;
@@ -17,6 +18,7 @@ void hash_table_pair::insert(int key) {
     for (auto& pair : table[index]) {
         if (pair.first == key) {
             pair.second = true; // Actualizar el bit de referencia
+            //std::cout << "Página " << key << " ya está en la tabla (hit)" << std::endl;
             return;
         }
     }
@@ -26,6 +28,7 @@ void hash_table_pair::insert(int key) {
         table[index].push_back(std::make_pair(key, true));
         pages.push_back(key);
         num_elements++;
+        std::cout << "Página " << key << " insertada en la tabla" << std::endl;
     } else {
         // Algoritmo Clock para encontrar una página para reemplazar
         while (true) {
@@ -35,9 +38,11 @@ void hash_table_pair::insert(int key) {
             for (auto it = table[current_index].begin(); it != table[current_index].end(); ++it) {
                 if (it->first == current_page) {
                     if (it->second == false) {
+                        std::cout << "Reemplazando página " << current_page << " por " << key << std::endl;
                         table[current_index].erase(it);
                         table[index].push_back(std::make_pair(key, true));
                         pages[clock_hand] = key;
+                        clock_hand = (clock_hand + 1) % size_inicial;
                         return;
                     } else {
                         it->second = false;
@@ -63,8 +68,9 @@ void hash_table_pair::remove(int key) {
 
 bool hash_table_pair::search(int key) {
     int index = key % size_inicial;
-    for (const auto& pair : table[index]) {
+    for (auto& pair : table[index]) {
         if (pair.first == key) {
+            pair.second = true;
             return true;
         }
     }
