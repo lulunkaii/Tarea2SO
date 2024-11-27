@@ -3,20 +3,19 @@
 #include <queue>
 #include <algorithm>
 #include "algoritmos.h"
-using namespace std;
 
-int simulate_fifo(const vector<int>& references, int num_frames) {
+int simulate_fifo(const std::vector<int>& referencias, int numero_marcos) {
     return 0;
 }
 
-int simulate_lru(const vector<int>& references, int num_frames) {
+int simulate_lru(const std::vector<int>& referencias, int numero_marcos) {
     return 0;
 }
 
-int simulate_opt(const vector<int>& references, int num_frames) {
+int simulate_opt(const std::vector<int>& referencias, int numero_marcos) {
     return 0;
 }
 
-int simulate_clock(const vector<int>& references, int num_frames) {
+int simulate_clock(const std::vector<int>& referencias, int numero_marcos) {
     return 0;
 }

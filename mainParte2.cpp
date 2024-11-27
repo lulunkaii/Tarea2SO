@@ -7,73 +7,66 @@
 #include <cstring>
 #include "algoritmos.h"
 
-using namespace std;
-
 // Prototipos de funciones
-int simulate_fifo(const vector<int>& references, int num_frames);
-int simulate_lru(const vector<int>& references, int num_frames);
-int simulate_opt(const vector<int>& references, int num_frames);
-int simulate_clock(const vector<int>& references, int num_frames);
-
-void print_usage() {
-    cout << "Uso: ./mvirtual -m <num_marcos> -a <algoritmo> -f <archivo_referencias>\n";
-    cout << "Algoritmos disponibles: OPT, FIFO, LRU, CLOCK\n";
-}
+int simular_fifo(const std::vector<int>& referencias, int num_marcos);
+int simular_lru(const std::vector<int>& references, int num_marcos);
+int simular_opt(const std::vector<int>& references, int num_marcos);
+int simular_clock(const std::vector<int>& references, int num_marcos);
 
 int main(int argc, char* argv[]) {
     if (argc != 7) {
-        print_usage();
+        std::cerr << "Uso incorrecto: " << argv[0] << " -m <num-marcos-iniciales> -a <alg-reemplazo> -f <archivo-referencias>" << std::endl;
         return EXIT_FAILURE;
     }
 
-    int num_frames = 0;
-    string algorithm, ref_file;
+    int num_marcos_iniciales = 0;
+    std::string alg_reemplazo, archivo_referencias;
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-m") == 0) {
-            num_frames = stoi(argv[++i]);
+            num_marcos_iniciales = atoi(argv[++i]);
         } else if (strcmp(argv[i], "-a") == 0) {
-            algorithm = argv[++i];
+            alg_reemplazo = argv[++i];
         } else if (strcmp(argv[i], "-f") == 0) {
-            ref_file = argv[++i];
+            archivo_referencias = argv[++i];
         }
     }
 
-    if (num_frames <= 0 || algorithm.empty() || ref_file.empty()) {
-        print_usage();
+    if (num_marcos_iniciales <= 0 || alg_reemplazo.empty() || archivo_referencias.empty()) {
+        std::cerr << "Uso incorrecto: " << argv[0] << " -m <num-marcos-iniciales> -a <alg-reemplazo> -f <archivo-referencias>" << std::endl;
         return EXIT_FAILURE;
     }
 
     // Leer referencias desde archivo
-    ifstream file(ref_file);
+    std::ifstream file(archivo_referencias);
     if (!file.is_open()) {
-        cerr << "Error al abrir archivo de referencias.\n";
+        std::cerr << "Error al abrir archivo de referencias.\n";
         return EXIT_FAILURE;
     }
 
-    vector<int> references;
+    std::vector<int> referencias;
     int ref;
     while (file >> ref) {
-        references.push_back(ref);
+        referencias.push_back(ref);
     }
     file.close();
 
-    int page_faults = 0;
+    int fallos_pagina = 0;
 
     // Seleccionar algoritmo
-    if (algorithm == "FIFO") {
-        page_faults = simulate_fifo(references, num_frames);
-    } else if (algorithm == "LRU") {
-        page_faults = simulate_lru(references, num_frames);
-    } else if (algorithm == "OPT") {
-        page_faults = simulate_opt(references, num_frames);
-    } else if (algorithm == "CLOCK") {
-        page_faults = simulate_clock(references, num_frames);
+    if (alg_reemplazo == "FIFO") {
+        fallos_pagina = simular_fifo(referencias, num_marcos_iniciales);
+    } else if (alg_reemplazo == "LRU") {
+        fallos_pagina = simular_lru(referencias, num_marcos_iniciales);
+    } else if (alg_reemplazo == "OPT") {
+        fallos_pagina = simular_opt(referencias, num_marcos_iniciales);
+    } else if (alg_reemplazo == "CLOCK") {
+        fallos_pagina = simular_clock(referencias, num_marcos_iniciales);
     } else {
-        cerr << "Algoritmo no reconocido: " << algorithm << "\n";
+        std::cerr << "Algoritmo no reconocido: " << alg_reemplazo << "\n";
         return EXIT_FAILURE;
     }
 
-    cout << "Fallos de página: " << page_faults << endl;
+    std::cout << "Fallos de página: " << fallos_pagina << std::endl;
     return EXIT_SUCCESS;
 }
