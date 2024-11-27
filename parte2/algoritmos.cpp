@@ -114,12 +114,14 @@ int simular_opt(const std::vector<int>& referencias, int numero_marcos) {
 int simular_clock(const std::vector<int>& referencias, int numero_marcos) {
     hash_table_pair marcos(numero_marcos);
     int fallos = 0;
-
-    for (int i = 0; i < numero_marcos; i++) {
-        if (!marcos.search(referencias[i])) {
-            fallos++;
-            marcos.insert(referencias[i]);
+    for (int ref : referencias) {
+            if (!marcos.search(ref)) {
+                std::cout << "Página " << ref << " no está en la tabla (fallo de página)" << std::endl;
+                fallos++;
+                marcos.insert(ref);
+            } else {
+                std::cout << "Página " << ref << " ya está en la tabla (hit)" << std::endl;
+            }
         }
-    }
-    return fallos;
+        return fallos;
 }
