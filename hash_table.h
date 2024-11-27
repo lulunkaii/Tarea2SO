@@ -4,17 +4,18 @@
 #include <list>
 #include <iostream>
 
+template <typename T>
 class hash_table_paginas {
     int size;
-    std::list<int> *table;
+    std::list<T> *table;
 
     hash_table_paginas(int size);
 
-    void insert(int key);
+    void insert(T key);
 
-    void remove(int key);
+    void remove(T key);
 
-    bool search(int key);
+    bool search(T key);
 
     ~hash_table_paginas();
 };

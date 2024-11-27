@@ -2,22 +2,26 @@
 #include <list>
 #include <iostream>
 
-hash_table_paginas::hash_table_paginas(int size) {
+template <typename T>
+hash_table_paginas<T>::hash_table_paginas(int size) {
     this->size = size;
     table = new std::list<int>[size];
 }
 
-void hash_table_paginas::insert(int key) {
+template <typename T>
+void hash_table_paginas<T>::insert(T key) {
     int index = key % size;
     table[index].push_back(key);
 }
 
-void hash_table_paginas::remove(int key) {
+template <typename T>
+void hash_table_paginas<T>::remove(T key) {
     int index = key % size;
     table[index].remove(key);
 }
 
-bool hash_table_paginas::search(int key) {
+template <typename T>
+bool hash_table_paginas<T>::search(T key) {
     int index = key % size;
     for (auto it = table[index].begin(); it != table[index].end(); it++) {
         if (*it == key) {
@@ -26,6 +30,8 @@ bool hash_table_paginas::search(int key) {
     }
     return false;
 }
-hash_table_paginas::~hash_table_paginas() {
+
+template <typename T>
+hash_table_paginas<T>::~hash_table_paginas() {
     delete[] table;
 }
