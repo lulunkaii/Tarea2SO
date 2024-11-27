@@ -7,12 +7,6 @@
 #include <cstring>
 #include "algoritmos.h"
 
-// Prototipos de funciones
-int simular_fifo(const std::vector<int>& referencias, int num_marcos);
-int simular_lru(const std::vector<int>& references, int num_marcos);
-int simular_opt(const std::vector<int>& references, int num_marcos);
-int simular_clock(const std::vector<int>& references, int num_marcos);
-
 int main(int argc, char* argv[]) {
     if (argc != 7) {
         std::cerr << "Uso incorrecto: " << argv[0] << " -m <num-marcos-iniciales> -a <alg-reemplazo> -f <archivo-referencias>" << std::endl;

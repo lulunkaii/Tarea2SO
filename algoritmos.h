@@ -10,7 +10,7 @@
  * @param num_frames Número de marcos de página disponibles.
  * @return Número de fallos de página.
  */
-int simulate_fifo(const std::vector<int>& references, int num_frames);
+int simular_fifo(const std::vector<int>& references, int num_frames);
 
 /**
  * Simula el reemplazo de páginas utilizando el algoritmo LRU (Least Recently Used).
@@ -19,7 +19,7 @@ int simulate_fifo(const std::vector<int>& references, int num_frames);
  * @param num_frames Número de marcos de página disponibles.
  * @return Número de fallos de página.
  */
-int simulate_lru(const std::vector<int>& references, int num_frames);
+int simular_lru(const std::vector<int>& references, int num_frames);
 
 /**
  * Simula el reemplazo de páginas utilizando el algoritmo Óptimo.
@@ -28,7 +28,7 @@ int simulate_lru(const std::vector<int>& references, int num_frames);
  * @param num_frames Número de marcos de página disponibles.
  * @return Número de fallos de página.
  */
-int simulate_opt(const std::vector<int>& references, int num_frames);
+int simular_opt(const std::vector<int>& references, int num_frames);
 
 /**
  * Simula el reemplazo de páginas utilizando el algoritmo de reloj (Clock).
@@ -37,6 +37,6 @@ int simulate_opt(const std::vector<int>& references, int num_frames);
  * @param num_frames Número de marcos de página disponibles.
  * @return Número de fallos de página.
  */
-int simulate_clock(const std::vector<int>& references, int num_frames);
+int simular_clock(const std::vector<int>& references, int num_frames);
 
 #endif // ALGORITHMS_H
