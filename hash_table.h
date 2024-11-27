@@ -9,6 +9,7 @@ class hash_table_paginas {
     int size;
     std::list<T> *table;
 
+public:
     hash_table_paginas(int size);
 
     void insert(T key);
