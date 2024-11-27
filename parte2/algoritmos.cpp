@@ -1,6 +1,7 @@
 #include <vector>
 #include <unordered_map>
 #include <queue>
+#include <deque>
 #include <algorithm>
 #include "algoritmos.h"
 #include "hash_table.h"
@@ -28,7 +29,26 @@ int simular_fifo(const std::vector<int>& referencias, int numero_marcos) {
 }
 
 int simular_lru(const std::vector<int>& referencias, int numero_marcos) {
-    return 0;
+    hash_table_pair marcos(numero_marcos);
+    std::deque<int> cola;
+    int fallos = 0;
+
+    for (int i = 0; i < referencias.size(); i++) {
+        if (!marcos.search(referencias[i])){
+            fallos++;
+            if(marcos.size() < numero_marcos) {
+                marcos.insert(referencias[i]);
+                cola.push_front(referencias[i]);
+            }
+            else{
+               marcos.remove(cola.back());
+               cola.pop_back();
+               marcos.insert(referencias[i]);
+                cola.push_front(referencias[i]);
+            }
+        }
+    }
+    return fallos;
 }
 
 int encontrar_reemplazo_opt(const std::vector<int>& referencias, int indice) {
