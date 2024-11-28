@@ -32,19 +32,23 @@ int simular_lru(const std::vector<int>& referencias, int numero_marcos) {
     hash_table_pair marcos(numero_marcos);
     std::deque<int> cola;
     int fallos = 0;
-
+    
     for (int i = 0; i < referencias.size(); i++) {
-        if (!marcos.search(referencias[i])){
+        int ref = referencias[i];
+        if (!marcos.search(ref)){
             fallos++;
-            if(marcos.size() < numero_marcos) {
-                marcos.insert(referencias[i]);
-                cola.push_front(referencias[i]);
-            }
-            else{
-               marcos.remove(cola.back());
+            if(marcos.size() == numero_marcos) {
+            int pag_eliminada = cola.back();
+                marcos.remove(pag_eliminada);
                cola.pop_back();
-               marcos.insert(referencias[i]);
-                cola.push_front(referencias[i]);
+            }
+            marcos.insert(ref);
+            cola.push_front(ref);
+        }
+        else{
+            if(cola.front() != ref ){
+                cola.pop_back();
+                cola.push_front(ref);
             }
         }
     }
