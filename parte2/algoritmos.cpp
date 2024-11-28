@@ -29,7 +29,7 @@ int simular_fifo(const std::vector<int>& referencias, int numero_marcos) {
 }
 
 int simular_lru(const std::vector<int>& referencias, int numero_marcos) {
-    hash_table_pair marcos(numero_marcos);
+    hash_table_paginas marcos(numero_marcos);
     std::deque<int> cola;
     int fallos = 0;
     
