@@ -28,7 +28,7 @@ void hash_table_pair::insert(int key) {
         table[index].push_back(std::make_pair(key, true));
         pages.push_back(key);
         num_elements++;
-        std::cout << "Página " << key << " insertada en la tabla" << std::endl;
+        //std::cout << "Página " << key << " insertada en la tabla" << std::endl;
     } else {
         // Algoritmo Clock para encontrar una página para reemplazar
         while (true) {
@@ -38,7 +38,7 @@ void hash_table_pair::insert(int key) {
             for (auto it = table[current_index].begin(); it != table[current_index].end(); ++it) {
                 if (it->first == current_page) {
                     if (it->second == false) {
-                        std::cout << "Reemplazando página " << current_page << " por " << key << std::endl;
+                        //std::cout << "Reemplazando página " << current_page << " por " << key << std::endl;
                         table[current_index].erase(it);
                         table[index].push_back(std::make_pair(key, true));
                         pages[clock_hand] = key;

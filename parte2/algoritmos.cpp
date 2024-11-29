@@ -120,11 +120,11 @@ int simular_clock(const std::vector<int>& referencias, int numero_marcos) {
     int fallos = 0;
     for (int ref : referencias) {
             if (!marcos.search(ref)) {
-                std::cout << "Página " << ref << " no está en la tabla (fallo de página)" << std::endl;
+                //std::cout << "Página " << ref << " no está en la tabla (fallo de página)" << std::endl;
                 fallos++;
                 marcos.insert(ref);
             } else {
-                std::cout << "Página " << ref << " ya está en la tabla (hit)" << std::endl;
+                //std::cout << "Página " << ref << " ya está en la tabla (hit)" << std::endl;
             }
         }
         return fallos;
